@@ -18,13 +18,13 @@ export const createUserConfig = (workspaceRoot: string, code: string, codeUri: s
             name: 'Python Language Server Example',
             options: {
                 $type: 'WebSocket',
-                host: 'localhost',
-                port: 30001,
+                host: 'thecodingwizard--app-py-fastapi-app-dev.modal.run',
+                port: 443,
                 path: 'pyright',
                 extraParams: {
                     authorization: 'UserAuth'
                 },
-                secured: false,
+                secured: true,
                 startOptions: {
                     onCall: (languageClient?: MonacoLanguageClient) => {
                         setTimeout(() => {
