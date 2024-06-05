@@ -14,38 +14,38 @@ import { MonacoLanguageClient } from 'monaco-languageclient';
 export const createUserConfig = (workspaceRoot: string, code: string, codeUri: string): UserConfig => {
     return {
         languageClientConfig: {
-            languageId: 'python',
+            languageId: 'cpp',
             name: 'Python Language Server Example',
             options: {
                 $type: 'WebSocket',
                 host: 'thecodingwizard--app-py-fastapi-app-dev.modal.run',
                 port: 443,
-                path: 'pyright',
+                path: 'clangd',
                 extraParams: {
                     authorization: 'UserAuth'
                 },
                 secured: true,
                 startOptions: {
                     onCall: (languageClient?: MonacoLanguageClient) => {
-                        setTimeout(() => {
-                            ['pyright.restartserver', 'pyright.organizeimports'].forEach((cmdName) => {
-                                vscode.commands.registerCommand(cmdName, (...args: unknown[]) => {
-                                    languageClient?.sendRequest('workspace/executeCommand', { command: cmdName, arguments: args });
-                                });
-                            });
-                        }, 250);
+                        // setTimeout(() => {
+                        //     ['pyright.restartserver', 'pyright.organizeimports'].forEach((cmdName) => {
+                        //         vscode.commands.registerCommand(cmdName, (...args: unknown[]) => {
+                        //             languageClient?.sendRequest('workspace/executeCommand', { command: cmdName, arguments: args });
+                        //         });
+                        //     });
+                        // }, 250);
                     },
                     reportStatus: true,
                 }
             },
-            clientOptions: {
-                documentSelector: ['python'],
-                workspaceFolder: {
-                    index: 0,
-                    name: 'workspace',
-                    uri: vscode.Uri.parse(workspaceRoot)
-                },
-            },
+            // clientOptions: {
+            //     documentSelector: ['cpp'],
+            //     workspaceFolder: {
+            //         index: 0,
+            //         name: 'workspace',
+            //         uri: vscode.Uri.parse(workspaceRoot)
+            //     },
+            // },
         },
         wrapperConfig: {
             serviceConfig: {
@@ -60,7 +60,8 @@ export const createUserConfig = (workspaceRoot: string, code: string, codeUri: s
                 codeResources: {
                     main: {
                         text: code,
-                        uri: codeUri
+                        // uri: codeUri
+                        fileExt: 'cpp'
                     }
                 },
                 userConfiguration: {

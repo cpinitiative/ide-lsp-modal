@@ -25,7 +25,9 @@ export default function Editor() {
   const editorContainer = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const userConfig = createUserConfig('/workspace', "hello", '/workspace/hello.py');
+    // Note: can't get C++ working. might need to register cpp file extension?
+    // const userConfig = createUserConfig('/workspace', "hello", '/workspace/hello.py');
+    const userConfig = createUserConfig('/workspace', "hello", '/workspace/hello.cpp');
     const wrapper = new MonacoEditorLanguageClientWrapper();
 
     (async () => {
