@@ -1,11 +1,12 @@
 import asyncio
 from contextlib import AbstractAsyncContextManager
+import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from modal import Image, App, asgi_app
 
 web_app = FastAPI()
-app = App()
+app = App("lsp-server")
 
 image = (
     Image.debian_slim()
@@ -67,7 +68,8 @@ class LanguageServerProcess(AbstractAsyncContextManager):
 
         # Read Content-Length: ...\r\n
         output = (await self._proc.stdout.readline()).decode("ascii")
-        assert output.startswith("Content-Length: ")
+        if not output.startswith("Content-Length: "):
+            raise Exception(f"Error: Expected output to start with `Content-Length: `, but got {output}")
         content_len = int(output[len("Content-Length: ") :])
 
         # Read \r\n
@@ -112,6 +114,8 @@ class LanguageServerProcess(AbstractAsyncContextManager):
                     proc_read = asyncio.create_task(self.read_msg())
         except WebSocketDisconnect:
             pass
+        except Exception as e:
+            logging.exception(e)
 
 
 @web_app.websocket("/pyright")
@@ -144,5 +148,5 @@ async def clangd_endpoint(websocket: WebSocket):
     allow_concurrent_inputs=10,
 )
 @asgi_app()
-def fastapi_app():
+def main():
     return web_app

@@ -19,3 +19,9 @@ Currently, pyright and clangd-18 are supported.
 - Add Java language server
 - Add ability to configure compilation flags
 - Add Rust / Kotlin language server?
+
+## Deployment
+
+```bash
+modal deploy lsp_server.py
+```
