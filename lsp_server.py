@@ -31,7 +31,7 @@ image = (
     )
 )
 PYTHON_LANGSERVER = "/node-v20.14.0-linux-x64/bin/pyright-langserver --stdio"
-CLANGD_LANGSERVER = "clangd --log=error"
+CLANGD_LANGSERVER = "clangd --log=error --background-index=false --malloc-trim"
 
 
 class LSPExited(Exception):
