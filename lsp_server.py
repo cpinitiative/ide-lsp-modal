@@ -34,6 +34,10 @@ PYTHON_LANGSERVER = "/node-v20.14.0-linux-x64/bin/pyright-langserver --stdio"
 CLANGD_LANGSERVER = "clangd --log=error"
 
 
+class LSPExited(Exception):
+    pass
+
+
 class LanguageServerProcess(AbstractAsyncContextManager):
     """Async context manager wrapper around a langauge server process.
 
@@ -48,7 +52,6 @@ class LanguageServerProcess(AbstractAsyncContextManager):
     def __init__(self, command: str):
         self._command = command
 
-
     async def __aenter__(self):
         self._proc = await asyncio.create_subprocess_shell(
             self._command,
@@ -56,20 +59,25 @@ class LanguageServerProcess(AbstractAsyncContextManager):
             stdout=asyncio.subprocess.PIPE,
         )
         return self
-    
 
     async def __aexit__(self, exc_type, exc, tb):
-        self._proc.terminate()
-        await self._proc.wait()
-    
+        if self._proc.returncode is None:
+            # process has not exited yet
+            self._proc.terminate()
+            await self._proc.wait()
 
-    async def read_msg(self) -> str:
+    async def read_msg(self) -> str | None:
         assert self._proc.stdout is not None
 
         # Read Content-Length: ...\r\n
-        output = (await self._proc.stdout.readline()).decode("ascii")
+        output = await self._proc.stdout.readline()
+        if output == b"":
+            raise LSPExited()
+        output = output.decode("ascii")
         if not output.startswith("Content-Length: "):
-            raise Exception(f"Error: Expected output to start with `Content-Length: `, but got {output}")
+            raise Exception(
+                f"Error: Expected output to start with `Content-Length: `, but got `{output.encode('ascii')}`"
+            )
         content_len = int(output[len("Content-Length: ") :])
 
         # Read \r\n
@@ -78,21 +86,17 @@ class LanguageServerProcess(AbstractAsyncContextManager):
         # Read message
         output = await self._proc.stdout.readexactly(content_len)
         return output.decode("utf-8")
-    
 
     async def send_msg(self, msg: str):
         assert self._proc.stdin is not None
 
         # Write Header
         data = bytes(msg, "utf-8")
-        self._proc.stdin.write(
-            bytes(f"Content-Length: {len(data)}\r\n\r\n", "ascii")
-        )
+        self._proc.stdin.write(bytes(f"Content-Length: {len(data)}\r\n\r\n", "ascii"))
 
         # Write data
         self._proc.stdin.write(data)
         await self._proc.stdin.drain()
-    
 
     async def connect_ws(self, websocket: WebSocket):
         ws_read = asyncio.create_task(websocket.receive_text())
@@ -114,8 +118,8 @@ class LanguageServerProcess(AbstractAsyncContextManager):
                     proc_read = asyncio.create_task(self.read_msg())
         except WebSocketDisconnect:
             pass
-        except Exception as e:
-            logging.exception(e)
+        except LSPExited:
+            pass
 
 
 @web_app.websocket("/pyright")
