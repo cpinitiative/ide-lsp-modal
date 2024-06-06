@@ -11,7 +11,7 @@ image = (
     Image.debian_slim()
     .apt_install("wget", "unzip")
     .run_commands(
-        "wget https://nodejs.org/dist/v20.14.0/node-v20.14.0-linux-x64.tar.xz",
+        "wget -nv https://nodejs.org/dist/v20.14.0/node-v20.14.0-linux-x64.tar.xz",
         "tar -xf node-v20.14.0-linux-x64.tar.xz",
         "rm node-v20.14.0-linux-x64.tar.xz",
         *[
@@ -21,15 +21,16 @@ image = (
         "npm install -g pyright",
     )
     .run_commands(
-        "wget https://github.com/clangd/clangd/releases/download/18.1.3/clangd-linux-18.1.3.zip",
+        "wget -nv https://github.com/clangd/clangd/releases/download/18.1.3/clangd-linux-18.1.3.zip",
         "unzip -q clangd-linux-18.1.3.zip",
         "rm clangd-linux-18.1.3.zip",
+        # Note: clangd requires $(which clangd)/../lib/clang to exist
         "mv clangd_18.1.3/bin/clangd /usr/bin",
-        "mv clangd_18.1.3/lib/clang/18 /usr/lib/clang",
+        "mv clangd_18.1.3/lib/clang /usr/lib/clang",
     )
 )
 PYTHON_LANGSERVER = "/node-v20.14.0-linux-x64/bin/pyright-langserver --stdio"
-CLANGD_LANGSERVER = "clangd"
+CLANGD_LANGSERVER = "clangd --log=error"
 
 
 class LanguageServerProcess(AbstractAsyncContextManager):
