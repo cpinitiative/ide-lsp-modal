@@ -66,7 +66,7 @@ class LanguageServerProcess(AbstractAsyncContextManager):
             self._proc.terminate()
             await self._proc.wait()
 
-    async def read_msg(self) -> str | None:
+    async def read_msg(self) -> str:
         assert self._proc.stdout is not None
 
         # Read Content-Length: ...\r\n
@@ -110,11 +110,13 @@ class LanguageServerProcess(AbstractAsyncContextManager):
                 if ws_read in done:
                     data = ws_read.result()
                     await self.send_msg(data)
+                    print(f"ws  -> lsp: {data[:100]}")
                     ws_read = asyncio.create_task(websocket.receive_text())
 
                 if proc_read in done:
                     output = proc_read.result()
                     await websocket.send_text(output)
+                    print(f"lsp -> ws : {output[:100]}")
                     proc_read = asyncio.create_task(self.read_msg())
         except WebSocketDisconnect:
             pass
