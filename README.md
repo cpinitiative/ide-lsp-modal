@@ -4,7 +4,7 @@ This repo contains the code necessary to run language servers on [Modal](https:/
 
 ## Overview
 
-Modal provides serverless function execution, allowing us to scale up or scale down the number of machines running these language servers. This previously was quite challenging to do without Modal -- we had to provision a large VM to handle peak traffic to the USACO Guide IDE, but this VM sat idle most of the time and frequently crashed, requiring a manual restart. Because language servers are typically memory-intensive and not CPU-intensive, and Modal bills per-second per-resource (ie. bills CPU and memory usage separately), running on Modal should be substantially cheaper. Additionally, Modal provides a far superior developer experience compared to managing our own servers.
+Modal provides serverless function execution, allowing us to scale up or scale down the number of machines running these language servers. This previously was quite challenging to do without Modal -- we had to provision a large VM to handle peak traffic to the USACO Guide IDE, but this VM sat idle most of the time and frequently crashed, requiring a manual restart. Additionally, Modal provides a far superior developer experience compared to managing our own servers.
 
 One drawback of Modal is it will terminate WebSocket connections after one hour (I think, not sure). This probably isn't too bad -- the user can just reload the page, or we can implement an auto-reconnect system on the USACO Guide IDE.
 
