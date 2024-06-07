@@ -104,8 +104,14 @@ class LanguageServerProcess(AbstractAsyncContextManager):
         try:
             while True:
                 done, _pending = await asyncio.wait(
-                    [ws_read, proc_read], return_when=asyncio.FIRST_COMPLETED
+                    [ws_read, proc_read], return_when=asyncio.FIRST_COMPLETED, timeout=8 * 60
                 )
+
+                if len(done) == 0:
+                    # no activity for 8 minutes -- timeout
+                    print("No activity after 8 minutes, closing connection")
+                    await websocket.close(reason="Inactive for 8 minutes")
+                    break
 
                 if ws_read in done:
                     data = ws_read.result()
@@ -122,6 +128,10 @@ class LanguageServerProcess(AbstractAsyncContextManager):
             pass
         except LSPExited:
             pass
+        except KeyboardInterrupt:
+            # preempted -- just disconnect I think
+            print("Server preempted -- closing connection")
+            await websocket.close(reason="Server closed, please refresh")
 
 
 @web_app.websocket("/pyright")
