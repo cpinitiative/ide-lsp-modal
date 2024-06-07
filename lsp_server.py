@@ -104,13 +104,13 @@ class LanguageServerProcess(AbstractAsyncContextManager):
         try:
             while True:
                 done, _pending = await asyncio.wait(
-                    [ws_read, proc_read], return_when=asyncio.FIRST_COMPLETED, timeout=8 * 60
+                    [ws_read, proc_read], return_when=asyncio.FIRST_COMPLETED, timeout=5 * 60
                 )
 
                 if len(done) == 0:
-                    # no activity for 8 minutes -- timeout
-                    print("No activity after 8 minutes, closing connection")
-                    await websocket.close(reason="Inactive for 8 minutes")
+                    # no activity for 5 minutes -- timeout
+                    print("No activity after 5 minutes, closing connection")
+                    await websocket.close(reason="Inactive for 5 minutes, please refresh")
                     break
 
                 if ws_read in done:
