@@ -137,7 +137,7 @@ class LanguageServerProcess(AbstractAsyncContextManager):
                 if last_log_time + 60 < time.time():
                     # Every 60 seconds, log how many messages were sent
                     print(
-                        f"In the last minute, {n_messages_from_lsp} were sent from the LSP and {n_messages_from_ws} were received from the websocket."
+                        f"In the last minute, {n_messages_from_lsp} messages were sent from the LSP and {n_messages_from_ws} messages were received from the websocket."
                     )
                     n_messages_from_lsp = 0
                     n_messages_from_ws = 0
