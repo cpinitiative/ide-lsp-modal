@@ -66,7 +66,11 @@ class LanguageServerProcess(AbstractAsyncContextManager):
     async def __aexit__(self, exc_type, exc, tb):
         if self._proc.returncode is None:
             print("Process hasn't exited yet, killing")
-            os.killpg(os.getpgid(self._proc.pid), signal.SIGTERM)
+            try:
+                os.killpg(os.getpgid(self._proc.pid), signal.SIGTERM)
+            except ProcessLookupError:
+                # The process probably died between the "if" statement and os.getpgid
+                pass
             returncode = await self._proc.wait()
             print(f"Process killed with exit code {returncode}")
         else:
@@ -187,9 +191,8 @@ async def clangd_endpoint(websocket: WebSocket):
 
 @app.function(
     image=image,
-    timeout=60 * 60 * 1,
-    # Todo: re-enable after testing kill() works
-    # allow_concurrent_inputs=10,
+    timeout=60 * 60 * 4,
+    allow_concurrent_inputs=10,
 )
 @asgi_app()
 def main():
