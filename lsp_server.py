@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import AbstractAsyncContextManager
-import logging
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import time
 
 from modal import Image, App, asgi_app
 
@@ -101,29 +101,44 @@ class LanguageServerProcess(AbstractAsyncContextManager):
     async def connect_ws(self, websocket: WebSocket):
         ws_read = asyncio.create_task(websocket.receive_text())
         proc_read = asyncio.create_task(self.read_msg())
+
+        last_log_time = time.time()
+        n_messages_from_ws = 0
+        n_messages_from_lsp = 0
+
         try:
             while True:
                 done, _pending = await asyncio.wait(
-                    [ws_read, proc_read], return_when=asyncio.FIRST_COMPLETED, timeout=5 * 60
+                    [ws_read, proc_read],
+                    return_when=asyncio.FIRST_COMPLETED,
+                    timeout=5 * 60,
                 )
 
                 if len(done) == 0:
                     # no activity for 5 minutes -- timeout
                     print("No activity after 5 minutes, closing connection")
-                    await websocket.close(reason="Inactive for 5 minutes, please refresh")
+                    await websocket.close(
+                        reason="Inactive for 5 minutes, please refresh"
+                    )
                     break
 
                 if ws_read in done:
                     data = ws_read.result()
                     await self.send_msg(data)
-                    print(f"ws  -> lsp: {data[:100]}")
+                    n_messages_from_ws += 1
                     ws_read = asyncio.create_task(websocket.receive_text())
 
                 if proc_read in done:
                     output = proc_read.result()
                     await websocket.send_text(output)
-                    print(f"lsp -> ws : {output[:100]}")
+                    n_messages_from_lsp += 1
                     proc_read = asyncio.create_task(self.read_msg())
+
+                if last_log_time + 60 < time.time():
+                    # Every 60 seconds, log how many messages were sent
+                    print(
+                        f"In the last minute, {n_messages_from_lsp} were sent from the LSP and {n_messages_from_ws} were received from the websocket."
+                    )
         except WebSocketDisconnect:
             pass
         except LSPExited:
@@ -132,6 +147,9 @@ class LanguageServerProcess(AbstractAsyncContextManager):
             # preempted -- just disconnect I think
             print("Server preempted -- closing connection")
             await websocket.close(reason="Server closed, please refresh")
+        finally:
+            ws_read.cancel()
+            proc_read.cancel()
 
 
 @web_app.websocket("/pyright")
@@ -160,8 +178,10 @@ async def clangd_endpoint(websocket: WebSocket):
 
 @app.function(
     image=image,
-    timeout=60 * 60 * 4,  # Note: I think Modal has an internal limit of 1 hour.
-    allow_concurrent_inputs=10,
+    timeout=60 * 60 * 1,
+    # see if this reduces memory usage -- disable concurent inputs;
+    # maybe this leads to better memory garbage collection.
+    # allow_concurrent_inputs=10,
 )
 @asgi_app()
 def main():
