@@ -2,6 +2,8 @@ import asyncio
 from contextlib import AbstractAsyncContextManager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import time
+import signal
+import os
 
 from modal import Image, App, asgi_app
 
@@ -57,14 +59,18 @@ class LanguageServerProcess(AbstractAsyncContextManager):
             self._command,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
+            preexec_fn=os.setsid,  # We want to set a session ID to kill child processes too
         )
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
         if self._proc.returncode is None:
-            # process has not exited yet
-            self._proc.terminate()
-            await self._proc.wait()
+            print("Process hasn't exited yet, killing")
+            os.killpg(os.getpgid(self._proc.pid), signal.SIGTERM)
+            returncode = await self._proc.wait()
+            print(f"Process killed with exit code {returncode}")
+        else:
+            print("Process has already exited, not killing")
 
     async def read_msg(self) -> str:
         assert self._proc.stdout is not None
@@ -182,8 +188,7 @@ async def clangd_endpoint(websocket: WebSocket):
 @app.function(
     image=image,
     timeout=60 * 60 * 1,
-    # disable concurrent inputs in an attempt to reduce memory usage:
-    # maybe this leads to better memory garbage collection.
+    # Todo: re-enable after testing kill() works
     # allow_concurrent_inputs=10,
 )
 @asgi_app()
