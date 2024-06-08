@@ -25,7 +25,7 @@ image = (
         "wget -nv https://github.com/clangd/clangd/releases/download/18.1.3/clangd-linux-18.1.3.zip",
         "unzip -q clangd-linux-18.1.3.zip",
         "rm clangd-linux-18.1.3.zip",
-        # Note: clangd requires $(which clangd)/../lib/clang to exist
+        # Note: clangd requires $(dirname $(which clangd))/../lib/clang to exist
         "mv clangd_18.1.3/bin/clangd /usr/bin",
         "mv clangd_18.1.3/lib/clang /usr/lib/clang",
     )
@@ -139,12 +139,15 @@ class LanguageServerProcess(AbstractAsyncContextManager):
                     print(
                         f"In the last minute, {n_messages_from_lsp} were sent from the LSP and {n_messages_from_ws} were received from the websocket."
                     )
+                    n_messages_from_lsp = 0
+                    n_messages_from_ws = 0
+                    last_log_time = time.time()
         except WebSocketDisconnect:
             pass
         except LSPExited:
             pass
         except KeyboardInterrupt:
-            # preempted -- just disconnect I think
+            # preempted -- just disconnect the user
             print("Server preempted -- closing connection")
             await websocket.close(reason="Server closed, please refresh")
         finally:
@@ -179,7 +182,7 @@ async def clangd_endpoint(websocket: WebSocket):
 @app.function(
     image=image,
     timeout=60 * 60 * 1,
-    # see if this reduces memory usage -- disable concurent inputs;
+    # disable concurrent inputs in an attempt to reduce memory usage:
     # maybe this leads to better memory garbage collection.
     # allow_concurrent_inputs=10,
 )
