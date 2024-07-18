@@ -4,6 +4,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import time
 import signal
 import os
+import tempfile
 
 from modal import Image, App, asgi_app
 
@@ -32,6 +33,7 @@ image = (
         "mv clangd_18.1.3/lib/clang /usr/lib/clang",
     )
 )
+
 PYTHON_LANGSERVER = "/node-v20.14.0-linux-x64/bin/pyright-langserver --stdio"
 CLANGD_LANGSERVER = "clangd --log=error --background-index=false --malloc-trim"
 
@@ -50,11 +52,21 @@ class LanguageServerProcess(AbstractAsyncContextManager):
     """
 
     _proc: asyncio.subprocess.Process
+    _tmpdir: tempfile.TemporaryDirectory | None
 
-    def __init__(self, command: str):
+    def __init__(self, command: str, compiler_options: str | None = None):
         self._command = command
+        self._compiler_options = compiler_options
+        self._tmpdir = None
 
     async def __aenter__(self):
+        if self._compiler_options is not None:
+            self._tmpdir = tempfile.TemporaryDirectory()
+            assert self._command == CLANGD_LANGSERVER, "Only clangd language server supports compile flags right now!"
+            with open(self._tmpdir.name + "/compile_flags.txt", "w") as f:
+                f.write("\n".join(self._compiler_options.split()))
+            self._command = self._command + " --compile-commands-dir=" + self._tmpdir.name
+
         self._proc = await asyncio.create_subprocess_shell(
             self._command,
             stdin=asyncio.subprocess.PIPE,
@@ -64,6 +76,9 @@ class LanguageServerProcess(AbstractAsyncContextManager):
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
+        if self._tmpdir is not None:
+            self._tmpdir.cleanup()
+
         if self._proc.returncode is None:
             print("Process hasn't exited yet, killing")
             try:
@@ -180,11 +195,11 @@ async def pyright_endpoint(websocket: WebSocket):
 
 
 @web_app.websocket("/clangd")
-async def clangd_endpoint(websocket: WebSocket):
+async def clangd_endpoint(websocket: WebSocket, compiler_options: str | None = None):
     await websocket.accept()
 
-    async with LanguageServerProcess(CLANGD_LANGSERVER) as lsp:
-        print("Got clangd connection!")
+    async with LanguageServerProcess(CLANGD_LANGSERVER, compiler_options=compiler_options) as lsp:
+        print(f"Got clangd connection with options `{compiler_options}`")
         await lsp.connect_ws(websocket)
         print("Clangd websocket disconnected, stopping language server")
 
