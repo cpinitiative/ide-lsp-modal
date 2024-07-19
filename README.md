@@ -12,13 +12,18 @@ Another concern is Modal could preempt the container while a user is connected. 
 
 ## Language Servers
 
-Currently, pyright and clangd-18 are supported.
+Currently, pyright and clangd-18 are supported. clangd-18 also supports compiler flags.
 
-## Future Plans
+### Future Plans
 
 - Add Java language server
-- Add ability to configure compilation flags
 - Add Rust / Kotlin language server?
+
+## Development
+
+```bash
+modal serve lsp_server.py
+```
 
 ## Deployment
 
