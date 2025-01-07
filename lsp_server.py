@@ -207,7 +207,7 @@ async def clangd_endpoint(websocket: WebSocket, compiler_options: str | None = N
 @app.function(
     image=image,
     timeout=60 * 60 * 4,
-    allow_concurrent_inputs=10,
+    allow_concurrent_inputs=20,
 )
 @asgi_app()
 def main():
