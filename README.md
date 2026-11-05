@@ -19,6 +19,13 @@ Currently, pyright and clangd-18 are supported. clangd-18 also supports compiler
 - Add Java language server
 - Add Rust / Kotlin language server?
 
+## Setup
+
+```bash
+pip install -r requirements.txt
+```
+
+
 ## Development
 
 ```bash

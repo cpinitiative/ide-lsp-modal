@@ -1,0 +1,9 @@
+PROJECT_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+  <name>workspace</name>
+  <comment></comment>
+  <projects></projects>
+  <buildSpec></buildSpec>
+  <natures></natures>
+</projectDescription>
+"""
