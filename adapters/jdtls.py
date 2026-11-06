@@ -15,15 +15,18 @@ class JdtlsAdapter(LanguageServerAdapter):
 
     async def aenter(self) -> str:
         self._jdtls_data = tempfile.TemporaryDirectory(prefix="jdtls-data-")
-        project_file = os.path.join(self._jdtls_data.name, ".project")
+        workspace_path = os.path.join(self._jdtls_data.name, "workspace")
+        os.mkdir(workspace_path)
+        data_path = os.path.join(self._jdtls_data.name, "data")
+        project_file = os.path.join(workspace_path, ".project")
         with open(project_file, "w") as f:
             f.write(PROJECT_XML)
-        main_path = os.path.join(self._jdtls_data.name, "Main.java")
+        main_path = os.path.join(workspace_path, "Main.java")
         open(main_path, "w").close()
 
         self._jdtls_real_uri = pathlib.Path(main_path).absolute().as_uri()
 
-        return self._command + f" -data {self._jdtls_data.name}"
+        return self._command + f" -data {data_path}"
 
     async def aexit(self) -> None:
         if self._jdtls_data is not None:
@@ -64,7 +67,7 @@ class JdtlsAdapter(LanguageServerAdapter):
 
         if obj.get("method") == "initialize":
             params = obj["params"]
-            workspace_uri = pathlib.Path(self._jdtls_data.name).absolute().as_uri()
+            workspace_uri = pathlib.Path(self._jdtls_data.name, "workspace").absolute().as_uri()
             params["rootUri"] = workspace_uri
             params["workspaceFolders"] = [{"uri": workspace_uri, "name": "workspace"}]
 

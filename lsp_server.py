@@ -33,13 +33,13 @@ image = (
     )
     .run_commands(
         "mkdir -p /opt/java",
-        "wget -nv https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.10%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.10_7.tar.gz -O /tmp/jdk21.tar.gz",
-        "tar -xzf /tmp/jdk21.tar.gz -C /opt/java",
-        "rm /tmp/jdk21.tar.gz",
-        "ln -sf /opt/java/jdk-21*/bin/java /usr/local/bin/java",
-        "ln -sf /opt/java/jdk-21*/bin/javac /usr/local/bin/javac",
+        "wget -nv https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.3%2B9/OpenJDK25U-jdk_x64_linux_hotspot_25.0.3_9.tar.gz -O /tmp/jdk25.tar.gz",
+        "tar -xzf /tmp/jdk25.tar.gz -C /opt/java",
+        "rm /tmp/jdk25.tar.gz",
+        "ln -sf /opt/java/jdk-25*/bin/java /usr/local/bin/java",
+        "ln -sf /opt/java/jdk-25*/bin/javac /usr/local/bin/javac",
         "mkdir -p /opt/jdtls",
-        "wget -nv https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz -O /tmp/jdtls.tar.gz",
+        "wget -nv https://download.eclipse.org/jdtls/snapshots/jdt-language-server-1.64.0-202611061638.tar.gz -O /tmp/jdtls.tar.gz",
         "tar -xzf /tmp/jdtls.tar.gz -C /opt/jdtls",
         "rm /tmp/jdtls.tar.gz",
     )
