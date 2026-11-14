@@ -25,6 +25,8 @@ Currently, pyright and clangd-18 are supported. clangd-18 also supports compiler
 pip install -r requirements.txt
 ```
 
+This pins the Modal client. Modal records the client version on each deploy and retires old ones, so deploy from an environment with these requirements installed.
+
 
 ## Development
 
