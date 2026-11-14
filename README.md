@@ -25,6 +25,8 @@ Currently, pyright and clangd-18 are supported. clangd-18 also supports compiler
 pip install -r requirements.txt
 ```
 
+This pins the Modal client. Modal records the client version on each deploy and retires old ones, so deploy from an environment with these requirements installed.
+
 
 ## Development
 
@@ -35,5 +37,7 @@ modal serve lsp_server.py
 ## Deployment
 
 ```bash
-modal deploy lsp_server.py
+MODAL_IMAGE_BUILDER_VERSION=2025.06 modal deploy lsp_server.py
 ```
+
+The `thecodingwizard` workspace still defaults to Modal's 2023.12 image builder, whose Debian 11 base can no longer install apt packages. Setting `MODAL_IMAGE_BUILDER_VERSION=2025.06` builds this app on Debian 12 instead. It can be dropped once the workspace's image builder is updated in the Modal dashboard.
